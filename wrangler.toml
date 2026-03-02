@@ -5,3 +5,7 @@ pages_build_output_dir = "./public"
 [[r2_buckets]]
 binding = "IMAGES_BUCKET"
 bucket_name = "cfpc-images"
+
+[[kv_namespaces]]
+binding = "UPLOAD_LIMITS"
+id = "YOUR_KV_NAMESPACE_ID"

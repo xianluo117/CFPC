@@ -36,6 +36,22 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: "文件大小不能超过 10MB" }, 400);
     }
 
+    // IP 日限流: 每日 2GB
+    if (!env.UPLOAD_LIMITS) {
+      return jsonResponse({ error: "上传限制配置缺失" }, 500);
+    }
+
+    const ip = getClientIp(request);
+    const dayKey = getDayKey();
+    const kvKey = `ip:${ip}:${dayKey}`;
+    const limitBytes = 2 * 1024 * 1024 * 1024;
+
+    const usedBytesRaw = await env.UPLOAD_LIMITS.get(kvKey);
+    const usedBytes = parseInt(usedBytesRaw || "0", 10);
+    if (usedBytes + file.size > limitBytes) {
+      return jsonResponse({ error: "该 IP 今日上传额度已用尽（2GB/日）" }, 429);
+    }
+
     // 生成唯一文件名
     const ext = file.name.split(".").pop().toLowerCase();
     const timestamp = Date.now();
@@ -78,6 +94,11 @@ export async function onRequestPost(context) {
         size: String(file.size),
         tags: JSON.stringify(tags),
       },
+    });
+
+    // 更新使用量
+    await env.UPLOAD_LIMITS.put(kvKey, String(usedBytes + file.size), {
+      expirationTtl: 60 * 60 * 24 * 2,
     });
 
     // 生成缩略图并存储
@@ -123,4 +144,17 @@ function jsonResponse(data, status = 200) {
       "Access-Control-Allow-Origin": "*",
     },
   });
+}
+
+function getDayKey() {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(now.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+function getClientIp(request) {
+  const header = request.headers.get("cf-connecting-ip");
+  return header || "0.0.0.0";
 }

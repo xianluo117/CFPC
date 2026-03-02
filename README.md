@@ -11,7 +11,8 @@
 - 🗑️ **图片删除** - 仅管理员后台可删除
 - 🏷️ **标签分类** - 上传时多选标签，支持按标签筛选
 - 🧠 **高清压缩** - 上传时自动压缩（最大边 1920px，质量 1）
-- 📱 **响应式设计** - 适配手机和桌面端
+- 🚦 **IP 限流** - 每个 IP 每日上传 2GB
+- **响应式设计** - 适配手机和桌面端
 
 ## 📁 项目结构
 
@@ -103,6 +104,26 @@ npm run deploy
    - R2 bucket: `cfpc-images`
 4. 保存后重新部署一次
 
+### 7. 创建并绑定 KV（上传限额）
+
+#### 方式一：CLI 创建 KV
+
+```bash
+npx wrangler kv:namespace create UPLOAD_LIMITS
+npx wrangler kv:namespace create UPLOAD_LIMITS --preview
+```
+
+将输出的 `id` / `preview_id` 写入 [`wrangler.toml`](wrangler.toml) 的 `UPLOAD_LIMITS` 配置（仓库中保持占位符，避免公开 ID）。
+
+#### 方式二：Dashboard 绑定 KV
+
+1. 进入你的 Pages 项目 → **Settings**
+2. 找到 **Functions** → **KV namespace bindings**
+3. 添加绑定：
+   - Variable name: `UPLOAD_LIMITS`
+   - KV namespace: 选择你创建的 `UPLOAD_LIMITS`
+4. 保存后重新部署一次
+
 ## 🔐 管理员后台
 
 ### 1. 访问地址
@@ -116,6 +137,7 @@ npm run deploy
 - `ADMIN_USER` 管理员用户名
 - `ADMIN_PASSWORD` 管理员密码
 - `ADMIN_TOKEN_SECRET` Token 签名密钥（建议随机 32 位以上）
+- `UPLOAD_LIMITS` 绑定 KV 命名空间（用于 IP 日限额）
 
 本地开发可在 `.dev.vars` 中配置：
 
