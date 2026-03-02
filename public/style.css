@@ -442,6 +442,59 @@ header h1 {
   gap: 10px;
 }
 
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.bulk-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.selected-count {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.image-card.selectable {
+  border: 2px solid transparent;
+}
+
+.image-card.selected {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.image-card .select-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  display: none;
+}
+
+.image-card.selected .select-badge {
+  display: block;
+}
+
 .toast {
   padding: 12px 20px;
   border-radius: 8px;

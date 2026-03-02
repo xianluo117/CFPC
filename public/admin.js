@@ -13,6 +13,11 @@ const adminPass = document.getElementById("adminPass");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshBtn");
+const selectAllBtn = document.getElementById("selectAllBtn");
+const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+const selectedCount = document.getElementById("selectedCount");
+const editTagList = document.getElementById("editTagList");
+const applyTagsBtn = document.getElementById("applyTagsBtn");
 const filterTagList = document.getElementById("filterTagList");
 const clearFilterBtn = document.getElementById("clearFilterBtn");
 const gallery = document.getElementById("gallery");
@@ -41,6 +46,8 @@ const TAGS = [
 ];
 
 let activeFilterTags = new Set();
+let activeEditTags = new Set();
+let selectedKeys = new Set();
 
 // Toast 容器
 const toastContainer = document.createElement("div");
@@ -80,6 +87,7 @@ function clearToken() {
 function showPanel() {
   loginSection.style.display = "none";
   panelSection.style.display = "block";
+  updateSelectionCount();
 }
 
 function showLogin() {
@@ -151,6 +159,7 @@ async function loadImages() {
       const card = createImageCard(img);
       gallery.appendChild(card);
     });
+    updateSelectionCount();
   } catch (err) {
     loading.style.display = "none";
     showToast("加载失败: " + err.message, "error");
@@ -159,15 +168,29 @@ async function loadImages() {
 
 function createImageCard(img) {
   const card = document.createElement("div");
-  card.className = "image-card";
+  card.className = "image-card selectable";
+  if (selectedKeys.has(img.key)) {
+    card.classList.add("selected");
+  }
   card.innerHTML = `
+    <div class="select-badge">已选</div>
     <img src="${API_BASE}/thumbnail/${img.key}" alt="${img.name}" loading="lazy">
     <div class="card-overlay">
       <div class="card-name">${img.name}</div>
       <div class="card-size">${formatSize(img.size)}</div>
     </div>
   `;
-  card.addEventListener("click", () => openPreview(img));
+  card.addEventListener("click", (e) => {
+    if (e.shiftKey) {
+      toggleSelect(img.key, card);
+      return;
+    }
+    openPreview(img);
+  });
+  card.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    toggleSelect(img.key, card);
+  });
   return card;
 }
 
@@ -218,6 +241,58 @@ deleteBtn.addEventListener("click", async () => {
 // ========== 刷新 ==========
 refreshBtn.addEventListener("click", loadImages);
 
+selectAllBtn.addEventListener("click", () => {
+  const cards = Array.from(gallery.querySelectorAll(".image-card.selectable"));
+  cards.forEach((card) => {
+    const img = card.querySelector("img");
+    const key = img?.getAttribute("src")?.split("/thumbnail/")[1];
+    if (key) {
+      selectedKeys.add(key);
+      card.classList.add("selected");
+    }
+  });
+  updateSelectionCount();
+});
+
+clearSelectionBtn.addEventListener("click", () => {
+  selectedKeys.clear();
+  gallery.querySelectorAll(".image-card.selected").forEach((card) => {
+    card.classList.remove("selected");
+  });
+  updateSelectionCount();
+});
+
+applyTagsBtn.addEventListener("click", async () => {
+  if (selectedKeys.size === 0) {
+    showToast("请先选择图片", "error");
+    return;
+  }
+  const tags = Array.from(activeEditTags);
+  if (tags.length === 0) {
+    showToast("请至少选择一个标签", "error");
+    return;
+  }
+
+  try {
+    const resp = await fetch(`${API_BASE}/admin/batch-tags`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ keys: Array.from(selectedKeys), tags }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "更新失败");
+    }
+    showToast("标签更新成功", "success");
+    loadImages();
+  } catch (err) {
+    showToast("更新失败: " + err.message, "error");
+  }
+});
+
 // ========== 标签筛选 ==========
 function renderTagChips(container, tags, activeSet, onChange) {
   container.innerHTML = "";
@@ -238,8 +313,26 @@ function renderTagChips(container, tags, activeSet, onChange) {
   });
 }
 
+function toggleSelect(key, card) {
+  if (selectedKeys.has(key)) {
+    selectedKeys.delete(key);
+    card.classList.remove("selected");
+  } else {
+    selectedKeys.add(key);
+    card.classList.add("selected");
+  }
+  updateSelectionCount();
+}
+
+function updateSelectionCount() {
+  if (selectedCount) {
+    selectedCount.textContent = `已选 ${selectedKeys.size}`;
+  }
+}
+
 function initTags() {
   renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+  renderTagChips(editTagList, TAGS, activeEditTags, null);
 }
 
 clearFilterBtn.addEventListener("click", () => {

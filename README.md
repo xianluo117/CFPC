@@ -133,16 +133,17 @@ ADMIN_TOKEN_SECRET=your-secret
 
 ## 🔧 API 接口
 
-| 方法     | 路径                  | 说明                                 |
-| -------- | --------------------- | ------------------------------------ |
-| `POST`   | `/api/upload`         | 上传图片 (multipart/form-data, tags) |
-| `GET`    | `/api/images`         | 获取图片列表                         |
-| `GET`    | `/api/image/:key`     | 获取原图                             |
-| `GET`    | `/api/thumbnail/:key` | 获取缩略图                           |
-| `GET`    | `/api/download/:key`  | 下载图片                             |
-| `DELETE` | `/api/image/:key`     | 删除图片（管理员）                   |
-| `POST`   | `/api/admin/login`    | 管理员登录                           |
-| `POST`   | `/api/admin/verify`   | 验证管理员 token                     |
+| 方法     | 路径                    | 说明                                 |
+| -------- | ----------------------- | ------------------------------------ |
+| `POST`   | `/api/upload`           | 上传图片 (multipart/form-data, tags) |
+| `GET`    | `/api/images`           | 获取图片列表                         |
+| `GET`    | `/api/image/:key`       | 获取原图                             |
+| `GET`    | `/api/thumbnail/:key`   | 获取缩略图                           |
+| `GET`    | `/api/download/:key`    | 下载图片                             |
+| `DELETE` | `/api/image/:key`       | 删除图片（管理员）                   |
+| `POST`   | `/api/admin/login`      | 管理员登录                           |
+| `POST`   | `/api/admin/verify`     | 验证管理员 token                     |
+| `POST`   | `/api/admin/batch-tags` | 批量更新图片标签（管理员）           |
 
 ## ⚠️ 注意事项
 
