@@ -27,6 +27,11 @@
           </div>
           <span id="progressText">上传中...</span>
         </div>
+        <div class="tag-section">
+          <div class="tag-title">🏷️ 上传标签（可多选）</div>
+          <div class="tag-list" id="uploadTagList"></div>
+          <div class="tag-hint">默认选中“正经”</div>
+        </div>
       </section>
 
       <!-- 图片列表 -->
@@ -35,6 +40,13 @@
           <h2>📷 图片列表</h2>
           <button class="btn btn-refresh" id="refreshBtn" title="刷新">
             🔄 刷新
+          </button>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-label">筛选标签：</div>
+          <div class="tag-list" id="filterTagList"></div>
+          <button class="btn btn-refresh" id="clearFilterBtn" title="清除筛选">
+            清除筛选
           </button>
         </div>
         <div class="gallery" id="gallery">

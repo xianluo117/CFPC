@@ -13,6 +13,8 @@ const adminPass = document.getElementById("adminPass");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const refreshBtn = document.getElementById("refreshBtn");
+const filterTagList = document.getElementById("filterTagList");
+const clearFilterBtn = document.getElementById("clearFilterBtn");
 const gallery = document.getElementById("gallery");
 const loading = document.getElementById("loading");
 const emptyState = document.getElementById("emptyState");
@@ -23,6 +25,22 @@ const previewImage = document.getElementById("previewImage");
 const downloadLink = document.getElementById("downloadLink");
 const deleteBtn = document.getElementById("deleteBtn");
 const modalInfo = document.getElementById("modalInfo");
+
+// 标签定义
+const TAGS = [
+  "正经",
+  "擦边",
+  "cos服",
+  "情趣",
+  "上装",
+  "下装",
+  "连衣群",
+  "袜子",
+  "鞋子",
+  "饰品",
+];
+
+let activeFilterTags = new Set();
 
 // Toast 容器
 const toastContainer = document.createElement("div");
@@ -113,7 +131,10 @@ async function loadImages() {
   gallery.querySelectorAll(".image-card").forEach((el) => el.remove());
 
   try {
-    const resp = await fetch(`${API_BASE}/images`, {
+    const query = activeFilterTags.size
+      ? `?tags=${encodeURIComponent(Array.from(activeFilterTags).join(","))}`
+      : "";
+    const resp = await fetch(`${API_BASE}/images${query}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (!resp.ok) throw new Error("加载失败");
@@ -158,7 +179,8 @@ function openPreview(img) {
   previewImage.src = `${API_BASE}/image/${img.key}`;
   downloadLink.href = `${API_BASE}/download/${img.key}`;
   downloadLink.download = img.name;
-  modalInfo.textContent = `${img.name} · ${formatSize(img.size)} · ${new Date(img.uploaded).toLocaleString("zh-CN")}`;
+  const tags = img.tags && img.tags.length ? ` · ${img.tags.join("/")}` : "";
+  modalInfo.textContent = `${img.name} · ${formatSize(img.size)} · ${new Date(img.uploaded).toLocaleString("zh-CN")}${tags}`;
   previewModal.classList.add("active");
   document.body.style.overflow = "hidden";
 }
@@ -196,9 +218,40 @@ deleteBtn.addEventListener("click", async () => {
 // ========== 刷新 ==========
 refreshBtn.addEventListener("click", loadImages);
 
+// ========== 标签筛选 ==========
+function renderTagChips(container, tags, activeSet, onChange) {
+  container.innerHTML = "";
+  tags.forEach((tag) => {
+    const chip = document.createElement("div");
+    chip.className = "tag-chip" + (activeSet.has(tag) ? " active" : "");
+    chip.textContent = tag;
+    chip.addEventListener("click", () => {
+      if (activeSet.has(tag)) {
+        activeSet.delete(tag);
+      } else {
+        activeSet.add(tag);
+      }
+      chip.classList.toggle("active");
+      onChange?.();
+    });
+    container.appendChild(chip);
+  });
+}
+
+function initTags() {
+  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+}
+
+clearFilterBtn.addEventListener("click", () => {
+  activeFilterTags.clear();
+  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+  loadImages();
+});
+
 // ========== 初始化 ==========
 if (getToken()) {
   showPanel();
+  initTags();
   loadImages();
 } else {
   showLogin();

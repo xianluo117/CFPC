@@ -9,6 +9,8 @@
 - 🔍 **图片预览** - 点击查看大图
 - ⬇️ **图片下载** - 下载原始图片文件
 - 🗑️ **图片删除** - 仅管理员后台可删除
+- 🏷️ **标签分类** - 上传时多选标签，支持按标签筛选
+- 🧠 **高清压缩** - 上传时自动压缩（最大边 1920px，质量 1）
 - 📱 **响应式设计** - 适配手机和桌面端
 
 ## 📁 项目结构
@@ -131,16 +133,16 @@ ADMIN_TOKEN_SECRET=your-secret
 
 ## 🔧 API 接口
 
-| 方法     | 路径                  | 说明                           |
-| -------- | --------------------- | ------------------------------ |
-| `POST`   | `/api/upload`         | 上传图片 (multipart/form-data) |
-| `GET`    | `/api/images`         | 获取图片列表                   |
-| `GET`    | `/api/image/:key`     | 获取原图                       |
-| `GET`    | `/api/thumbnail/:key` | 获取缩略图                     |
-| `GET`    | `/api/download/:key`  | 下载图片                       |
-| `DELETE` | `/api/image/:key`     | 删除图片（管理员）             |
-| `POST`   | `/api/admin/login`    | 管理员登录                     |
-| `POST`   | `/api/admin/verify`   | 验证管理员 token               |
+| 方法     | 路径                  | 说明                                 |
+| -------- | --------------------- | ------------------------------------ |
+| `POST`   | `/api/upload`         | 上传图片 (multipart/form-data, tags) |
+| `GET`    | `/api/images`         | 获取图片列表                         |
+| `GET`    | `/api/image/:key`     | 获取原图                             |
+| `GET`    | `/api/thumbnail/:key` | 获取缩略图                           |
+| `GET`    | `/api/download/:key`  | 下载图片                             |
+| `DELETE` | `/api/image/:key`     | 删除图片（管理员）                   |
+| `POST`   | `/api/admin/login`    | 管理员登录                           |
+| `POST`   | `/api/admin/verify`   | 验证管理员 token                     |
 
 ## ⚠️ 注意事项
 

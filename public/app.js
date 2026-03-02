@@ -20,6 +20,26 @@ const modalClose = document.getElementById("modalClose");
 const previewImage = document.getElementById("previewImage");
 const downloadLink = document.getElementById("downloadLink");
 const modalInfo = document.getElementById("modalInfo");
+const uploadTagList = document.getElementById("uploadTagList");
+const filterTagList = document.getElementById("filterTagList");
+const clearFilterBtn = document.getElementById("clearFilterBtn");
+
+// 标签定义
+const TAGS = [
+  "正经",
+  "擦边",
+  "cos服",
+  "情趣",
+  "上装",
+  "下装",
+  "连衣群",
+  "袜子",
+  "鞋子",
+  "饰品",
+];
+
+let activeUploadTags = new Set(["正经"]);
+let activeFilterTags = new Set();
 
 // Toast 容器
 const toastContainer = document.createElement("div");
@@ -92,11 +112,17 @@ async function uploadFiles(files) {
 
   for (const file of validFiles) {
     try {
-      progressText.textContent = `上传中: ${file.name} (${uploaded + 1}/${validFiles.length})`;
+      progressText.textContent = `处理并上传: ${file.name} (${uploaded + 1}/${validFiles.length})`;
       progressFill.style.width = `${(uploaded / validFiles.length) * 100}%`;
 
+      const compressedFile = await compressImage(file);
+      if (compressedFile.size > MAX_SIZE) {
+        throw new Error("压缩后仍超过 10MB 限制");
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
+      formData.append("tags", JSON.stringify(Array.from(activeUploadTags)));
 
       const resp = await fetch(`${API_BASE}/upload`, {
         method: "POST",
@@ -135,7 +161,10 @@ async function loadImages() {
   gallery.querySelectorAll(".image-card").forEach((el) => el.remove());
 
   try {
-    const resp = await fetch(`${API_BASE}/images`);
+    const query = activeFilterTags.size
+      ? `?tags=${encodeURIComponent(Array.from(activeFilterTags).join(","))}`
+      : "";
+    const resp = await fetch(`${API_BASE}/images${query}`);
     if (!resp.ok) throw new Error("加载失败");
     const data = await resp.json();
 
@@ -178,7 +207,8 @@ function openPreview(img) {
   previewImage.src = `${API_BASE}/image/${img.key}`;
   downloadLink.href = `${API_BASE}/download/${img.key}`;
   downloadLink.download = img.name;
-  modalInfo.textContent = `${img.name} · ${formatSize(img.size)} · ${new Date(img.uploaded).toLocaleString("zh-CN")}`;
+  const tags = img.tags && img.tags.length ? ` · ${img.tags.join("/")}` : "";
+  modalInfo.textContent = `${img.name} · ${formatSize(img.size)} · ${new Date(img.uploaded).toLocaleString("zh-CN")}${tags}`;
   previewModal.classList.add("active");
   document.body.style.overflow = "hidden";
 }
@@ -198,5 +228,86 @@ document.addEventListener("keydown", (e) => {
 // ========== 刷新 ==========
 refreshBtn.addEventListener("click", loadImages);
 
+// ========== 标签渲染与交互 ==========
+function renderTagChips(container, tags, activeSet, onChange) {
+  container.innerHTML = "";
+  tags.forEach((tag) => {
+    const chip = document.createElement("div");
+    chip.className = "tag-chip" + (activeSet.has(tag) ? " active" : "");
+    chip.textContent = tag;
+    chip.addEventListener("click", () => {
+      if (activeSet.has(tag)) {
+        activeSet.delete(tag);
+      } else {
+        activeSet.add(tag);
+      }
+      chip.classList.toggle("active");
+      onChange?.();
+    });
+    container.appendChild(chip);
+  });
+}
+
+// ========== 图片压缩 ==========
+async function compressImage(file) {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") {
+    return file;
+  }
+
+  const MAX_DIMENSION = 1920;
+  const QUALITY = 1;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(
+      1,
+      MAX_DIMENSION / Math.max(bitmap.width, bitmap.height),
+    );
+    const targetWidth = Math.round(bitmap.width * scale);
+    const targetHeight = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+
+    const outputType = file.type === "image/png" ? "image/webp" : file.type;
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, outputType, QUALITY),
+    );
+
+    if (!blob) return file;
+
+    const newName =
+      file.name.replace(/\.[^.]+$/, "") +
+      (outputType === "image/webp" ? ".webp" : ".jpg");
+    return new File([blob], newName, {
+      type: outputType,
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  }
+}
+
+function initTags() {
+  renderTagChips(uploadTagList, TAGS, activeUploadTags, () => {
+    if (activeUploadTags.size === 0) {
+      activeUploadTags.add("正经");
+      renderTagChips(uploadTagList, TAGS, activeUploadTags, null);
+    }
+  });
+
+  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+}
+
+clearFilterBtn.addEventListener("click", () => {
+  activeFilterTags.clear();
+  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+  loadImages();
+});
+
 // ========== 初始化 ==========
+initTags();
 loadImages();

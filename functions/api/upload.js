@@ -15,6 +15,7 @@ export async function onRequestPost(context) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const tagsRaw = formData.get("tags");
 
     if (!file || !(file instanceof File)) {
       return jsonResponse({ error: "未找到文件" }, 400);
@@ -41,6 +42,28 @@ export async function onRequestPost(context) {
     const randomId = crypto.randomUUID().slice(0, 8);
     const key = `${timestamp}-${randomId}.${ext}`;
 
+    // 解析标签
+    const defaultTags = [
+      "正经",
+      "擦边",
+      "cos服",
+      "情趣",
+      "上装",
+      "下装",
+      "连衣群",
+      "袜子",
+      "鞋子",
+      "饰品",
+    ];
+    let tags = [];
+    try {
+      tags = tagsRaw ? JSON.parse(tagsRaw) : [];
+    } catch {
+      tags = [];
+    }
+    tags = Array.from(new Set(tags.filter((t) => defaultTags.includes(t))));
+    if (tags.length === 0) tags = ["正经"];
+
     // 读取文件内容
     const arrayBuffer = await file.arrayBuffer();
 
@@ -53,6 +76,7 @@ export async function onRequestPost(context) {
         originalName: file.name,
         uploadedAt: new Date().toISOString(),
         size: String(file.size),
+        tags: JSON.stringify(tags),
       },
     });
 
@@ -70,6 +94,7 @@ export async function onRequestPost(context) {
       key: key,
       name: file.name,
       size: file.size,
+      tags: tags,
     });
   } catch (err) {
     return jsonResponse({ error: "上传失败: " + err.message }, 500);
