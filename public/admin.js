@@ -121,6 +121,7 @@ loginBtn.addEventListener("click", async () => {
     setToken(data.token);
     showToast("登录成功", "success");
     showPanel();
+    initTags();
     loadImages();
   } catch (err) {
     showToast(err.message, "error");
