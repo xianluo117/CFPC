@@ -1,0 +1,7 @@
+name = "cfpc-image-hosting"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "./public"
+
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "cfpc-images"

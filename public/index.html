@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CFpc 图片托管</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🖼️ CFpc 图片托管</h1>
+        <p class="subtitle">上传、浏览、下载你的图片</p>
+      </header>
+
+      <!-- 上传区域 -->
+      <section class="upload-section">
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">📤</div>
+          <p>拖拽图片到此处，或点击选择文件</p>
+          <p class="upload-hint">支持 JPG、PNG、GIF、WebP，单文件最大 10MB</p>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden />
+        </div>
+        <div class="upload-progress" id="uploadProgress" style="display: none">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span id="progressText">上传中...</span>
+        </div>
+      </section>
+
+      <!-- 图片列表 -->
+      <section class="gallery-section">
+        <div class="gallery-header">
+          <h2>📷 图片列表</h2>
+          <button class="btn btn-refresh" id="refreshBtn" title="刷新">
+            🔄 刷新
+          </button>
+        </div>
+        <div class="gallery" id="gallery">
+          <div class="loading" id="loading">加载中...</div>
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none">
+          <p>暂无图片，快来上传吧！</p>
+        </div>
+      </section>
+
+      <!-- 图片预览模态框 -->
+      <div class="modal" id="previewModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+          <button class="modal-close" id="modalClose">✕</button>
+          <img id="previewImage" src="" alt="预览" />
+          <div class="modal-actions">
+            <a id="downloadLink" class="btn btn-download" download
+              >⬇️ 下载原图</a
+            >
+          </div>
+          <div class="modal-info" id="modalInfo"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

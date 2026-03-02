@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CFpc 管理后台</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container admin-container">
+      <header>
+        <h1>🛠️ 管理员后台</h1>
+        <p class="subtitle">登录后可管理和删除图片</p>
+      </header>
+
+      <!-- 登录面板 -->
+      <section class="admin-login" id="loginSection">
+        <div class="card">
+          <h2>管理员登录</h2>
+          <div class="form-group">
+            <label for="adminUser">用户名</label>
+            <input
+              id="adminUser"
+              type="text"
+              placeholder="请输入管理员用户名"
+            />
+          </div>
+          <div class="form-group">
+            <label for="adminPass">密码</label>
+            <input
+              id="adminPass"
+              type="password"
+              placeholder="请输入管理员密码"
+            />
+          </div>
+          <button class="btn btn-download" id="loginBtn">🔐 登录</button>
+        </div>
+      </section>
+
+      <!-- 管理面板 -->
+      <section class="admin-panel" id="panelSection" style="display: none">
+        <div class="panel-header">
+          <h2>📷 图片管理</h2>
+          <div class="panel-actions">
+            <button class="btn btn-refresh" id="refreshBtn" title="刷新">
+              🔄 刷新
+            </button>
+            <button class="btn btn-delete" id="logoutBtn">🚪 退出</button>
+          </div>
+        </div>
+
+        <div class="gallery" id="gallery">
+          <div class="loading" id="loading">加载中...</div>
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none">
+          <p>暂无图片</p>
+        </div>
+      </section>
+
+      <!-- 管理员预览模态框 -->
+      <div class="modal" id="previewModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+          <button class="modal-close" id="modalClose">✕</button>
+          <img id="previewImage" src="" alt="预览" />
+          <div class="modal-actions">
+            <a id="downloadLink" class="btn btn-download" download
+              >⬇️ 下载原图</a
+            >
+            <button class="btn btn-delete" id="deleteBtn">🗑️ 删除</button>
+          </div>
+          <div class="modal-info" id="modalInfo"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>

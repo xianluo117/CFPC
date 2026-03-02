@@ -1,0 +1,14 @@
+{
+  "name": "cfpc-image-hosting",
+  "version": "1.0.0",
+  "description": "Cloudflare Pages 图片托管服务 - 支持上传、下载和缩略图展示",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev ./public --r2=IMAGES_BUCKET --port 8788",
+    "deploy": "wrangler pages deploy ./public",
+    "create-bucket": "wrangler r2 bucket create cfpc-images"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
