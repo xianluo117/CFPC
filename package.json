@@ -1,6 +1,6 @@
 {
   "name": "cfpc-image-hosting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cloudflare Pages 图片托管服务 - 支持上传、下载和缩略图展示",
   "private": true,
   "scripts": {
