@@ -6,3 +6,7 @@ pages_build_output_dir = "./public"
 binding = "IMAGES_BUCKET"
 bucket_name = "cfpc-images"
 
+[[kv_namespaces]]
+binding = "UPLOAD_LIMITS"
+id = "872dfd61f3ea4b258c7e807aa51fca58"
+

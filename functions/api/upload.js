@@ -36,20 +36,20 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: "文件大小不能超过 10MB" }, 400);
     }
 
-    // IP 日限流: 每日 2GB
-    if (!env.UPLOAD_LIMITS) {
-      return jsonResponse({ error: "上传限制配置缺失" }, 500);
-    }
-
+    // IP 日限流: 每日 2GB。仅在 UPLOAD_LIMITS 正确绑定为 KV Namespace 时启用。
+    const uploadLimits = getUploadLimitsNamespace(env);
     const ip = getClientIp(request);
     const dayKey = getDayKey();
     const kvKey = `ip:${ip}:${dayKey}`;
     const limitBytes = 2 * 1024 * 1024 * 1024;
+    let usedBytes = 0;
 
-    const usedBytesRaw = await env.UPLOAD_LIMITS.get(kvKey);
-    const usedBytes = parseInt(usedBytesRaw || "0", 10);
-    if (usedBytes + file.size > limitBytes) {
-      return jsonResponse({ error: "该 IP 今日上传额度已用尽（2GB/日）" }, 429);
+    if (uploadLimits) {
+      const usedBytesRaw = await uploadLimits.get(kvKey);
+      usedBytes = parseInt(usedBytesRaw || "0", 10);
+      if (usedBytes + file.size > limitBytes) {
+        return jsonResponse({ error: "该 IP 今日上传额度已用尽（2GB/日）" }, 429);
+      }
     }
 
     // 生成唯一文件名
@@ -96,10 +96,12 @@ export async function onRequestPost(context) {
       },
     });
 
-    // 更新使用量
-    await env.UPLOAD_LIMITS.put(kvKey, String(usedBytes + file.size), {
-      expirationTtl: 60 * 60 * 24 * 2,
-    });
+    // 更新使用量。KV 未绑定或误配为普通环境变量时跳过限流统计，不影响上传。
+    if (uploadLimits) {
+      await uploadLimits.put(kvKey, String(usedBytes + file.size), {
+        expirationTtl: 60 * 60 * 24 * 2,
+      });
+    }
 
     // 生成缩略图并存储
     const thumbnailKey = `thumb/${key}`;
@@ -144,6 +146,14 @@ function jsonResponse(data, status = 200) {
       "Access-Control-Allow-Origin": "*",
     },
   });
+}
+
+function getUploadLimitsNamespace(env) {
+  const namespace = env.UPLOAD_LIMITS;
+  if (!namespace || typeof namespace.get !== "function" || typeof namespace.put !== "function") {
+    return null;
+  }
+  return namespace;
 }
 
 function getDayKey() {
