@@ -5,13 +5,16 @@ export async function onRequestGet(context) {
   const { env, request } = context;
 
   try {
+    const url = new URL(request.url);
+    const page = clampNumber(url.searchParams.get("page"), 1, 1, 100000);
+    const pageSize = clampNumber(url.searchParams.get("pageSize"), 24, 1, 96);
+
     const listed = await env.IMAGES_BUCKET.list({
       prefix: "",
       limit: 1000,
     });
 
     // 过滤掉缩略图 (thumb/ 前缀)
-    const url = new URL(request.url);
     const filterTags = (url.searchParams.get("tags") || "")
       .split(",")
       .map((t) => t.trim())
@@ -33,7 +36,19 @@ export async function onRequestGet(context) {
       })
       .sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
 
-    return new Response(JSON.stringify({ images }), {
+    const total = images.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const start = (safePage - 1) * pageSize;
+    const pagedImages = images.slice(start, start + pageSize);
+
+    return new Response(JSON.stringify({
+      images: pagedImages,
+      total,
+      page: safePage,
+      pageSize,
+      totalPages,
+    }), {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -51,6 +66,12 @@ export async function onRequestGet(context) {
       },
     );
   }
+}
+
+function clampNumber(value, fallback, min, max) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
 }
 
 function parseTags(raw) {

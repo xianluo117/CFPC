@@ -73,6 +73,21 @@
         <div class="empty-state" id="emptyState" style="display: none">
           <p>暂无图片</p>
         </div>
+        <div class="pagination" id="pagination" style="display: none">
+          <button class="btn btn-refresh" id="prevPageBtn" type="button">上一页</button>
+          <span class="page-info" id="pageInfo">第 1 / 1 页，共 0 张</span>
+          <button class="btn btn-refresh" id="nextPageBtn" type="button">下一页</button>
+          <label class="page-size-label" for="pageSizeSelect">
+            每页
+            <select id="pageSizeSelect" class="page-size-select">
+              <option value="12">12</option>
+              <option value="24" selected>24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
+            </select>
+            张
+          </label>
+        </div>
       </section>
 
       <!-- 管理员预览模态框 -->

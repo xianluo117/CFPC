@@ -23,6 +23,11 @@ const modalInfo = document.getElementById("modalInfo");
 const uploadTagList = document.getElementById("uploadTagList");
 const filterTagList = document.getElementById("filterTagList");
 const clearFilterBtn = document.getElementById("clearFilterBtn");
+const pagination = document.getElementById("pagination");
+const pageInfo = document.getElementById("pageInfo");
+const prevPageBtn = document.getElementById("prevPageBtn");
+const nextPageBtn = document.getElementById("nextPageBtn");
+const pageSizeSelect = document.getElementById("pageSizeSelect");
 
 // 标签定义
 const TAGS = [
@@ -40,6 +45,10 @@ const TAGS = [
 
 let activeUploadTags = new Set(["正经"]);
 let activeFilterTags = new Set();
+let currentPage = 1;
+let pageSize = Number(pageSizeSelect?.value || 24);
+let totalImages = 0;
+let latestLoadRequestId = 0;
 
 // Toast 容器
 const toastContainer = document.createElement("div");
@@ -149,52 +158,82 @@ async function uploadFiles(files) {
   }, 1500);
 
   fileInput.value = "";
-  loadImages();
+  resetAndLoadImages();
 }
 
 // ========== 加载图片列表 ==========
-async function loadImages() {
+async function loadImages(page = currentPage) {
+  const requestId = ++latestLoadRequestId;
+  currentPage = Math.max(1, page);
   loading.style.display = "block";
   emptyState.style.display = "none";
+  setPaginationDisabled(true);
 
-  // 清除已有卡片
+  // 清除已有卡片，避免旧缩略图继续占用页面资源
   gallery.querySelectorAll(".image-card").forEach((el) => el.remove());
 
   try {
-    const query = activeFilterTags.size
-      ? `?tags=${encodeURIComponent(Array.from(activeFilterTags).join(","))}`
-      : "";
-    const resp = await fetch(`${API_BASE}/images${query}`);
+    const params = new URLSearchParams({
+      page: String(currentPage),
+      pageSize: String(pageSize),
+    });
+    if (activeFilterTags.size) {
+      params.set("tags", Array.from(activeFilterTags).join(","));
+    }
+
+    const resp = await fetch(`${API_BASE}/images?${params.toString()}`);
     if (!resp.ok) throw new Error("加载失败");
     const data = await resp.json();
+    if (requestId !== latestLoadRequestId) return;
 
     loading.style.display = "none";
+    totalImages = Number(data.total || 0);
+    currentPage = Number(data.page || currentPage);
+    pageSize = Number(data.pageSize || pageSize);
 
     if (!data.images || data.images.length === 0) {
       emptyState.style.display = "block";
+      updatePagination();
       return;
     }
 
+    const fragment = document.createDocumentFragment();
     data.images.forEach((img) => {
-      const card = createImageCard(img);
-      gallery.appendChild(card);
+      fragment.appendChild(createImageCard(img));
     });
+    gallery.appendChild(fragment);
+    updatePagination();
   } catch (err) {
+    if (requestId !== latestLoadRequestId) return;
     loading.style.display = "none";
     showToast("加载图片列表失败: " + err.message, "error");
+    updatePagination();
   }
 }
 
 function createImageCard(img) {
   const card = document.createElement("div");
   card.className = "image-card";
-  card.innerHTML = `
-    <img src="${API_BASE}/thumbnail/${img.key}" alt="${img.name}" loading="lazy">
-    <div class="card-overlay">
-      <div class="card-name">${img.name}</div>
-      <div class="card-size">${formatSize(img.size)}</div>
-    </div>
-  `;
+
+  const thumbnail = document.createElement("img");
+  thumbnail.src = `${API_BASE}/thumbnail/${encodeURIComponent(img.key)}`;
+  thumbnail.alt = img.name;
+  thumbnail.loading = "lazy";
+  thumbnail.decoding = "async";
+
+  const overlay = document.createElement("div");
+  overlay.className = "card-overlay";
+
+  const name = document.createElement("div");
+  name.className = "card-name";
+  name.textContent = img.name;
+
+  const size = document.createElement("div");
+  size.className = "card-size";
+  size.textContent = formatSize(img.size);
+
+  overlay.append(name, size);
+  card.append(thumbnail, overlay);
   card.addEventListener("click", () => openPreview(img));
   return card;
 }
@@ -204,8 +243,8 @@ let currentImage = null;
 
 function openPreview(img) {
   currentImage = img;
-  previewImage.src = `${API_BASE}/image/${img.key}`;
-  downloadLink.href = `${API_BASE}/download/${img.key}`;
+  previewImage.src = `${API_BASE}/image/${encodeURIComponent(img.key)}`;
+  downloadLink.href = `${API_BASE}/download/${encodeURIComponent(img.key)}`;
   downloadLink.download = img.name;
   const tags = img.tags && img.tags.length ? ` · ${img.tags.join("/")}` : "";
   modalInfo.textContent = `${img.name} · ${formatSize(img.size)} · ${new Date(img.uploaded).toLocaleString("zh-CN")}${tags}`;
@@ -216,6 +255,7 @@ function openPreview(img) {
 function closePreview() {
   previewModal.classList.remove("active");
   document.body.style.overflow = "";
+  previewImage.removeAttribute("src");
   currentImage = null;
 }
 
@@ -225,8 +265,46 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closePreview();
 });
 
+// ========== 分页 ==========
+function getTotalPages() {
+  return Math.max(1, Math.ceil(totalImages / pageSize));
+}
+
+function setPaginationDisabled(disabled) {
+  prevPageBtn.disabled = disabled;
+  nextPageBtn.disabled = disabled;
+  pageSizeSelect.disabled = disabled;
+}
+
+function updatePagination() {
+  const totalPages = getTotalPages();
+  pagination.style.display = totalImages > 0 ? "flex" : "none";
+  pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页，共 ${totalImages} 张`;
+  prevPageBtn.disabled = currentPage <= 1;
+  nextPageBtn.disabled = currentPage >= totalPages;
+  pageSizeSelect.disabled = false;
+}
+
+function resetAndLoadImages() {
+  currentPage = 1;
+  loadImages(1);
+}
+
+prevPageBtn.addEventListener("click", () => {
+  if (currentPage > 1) loadImages(currentPage - 1);
+});
+
+nextPageBtn.addEventListener("click", () => {
+  if (currentPage < getTotalPages()) loadImages(currentPage + 1);
+});
+
+pageSizeSelect.addEventListener("change", () => {
+  pageSize = Number(pageSizeSelect.value);
+  resetAndLoadImages();
+});
+
 // ========== 刷新 ==========
-refreshBtn.addEventListener("click", loadImages);
+refreshBtn.addEventListener("click", () => loadImages(currentPage));
 
 // ========== 标签渲染与交互 ==========
 function renderTagChips(container, tags, activeSet, onChange) {
@@ -299,13 +377,13 @@ function initTags() {
     }
   });
 
-  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
+  renderTagChips(filterTagList, TAGS, activeFilterTags, resetAndLoadImages);
 }
 
 clearFilterBtn.addEventListener("click", () => {
   activeFilterTags.clear();
-  renderTagChips(filterTagList, TAGS, activeFilterTags, () => loadImages());
-  loadImages();
+  renderTagChips(filterTagList, TAGS, activeFilterTags, resetAndLoadImages);
+  resetAndLoadImages();
 });
 
 // ========== 初始化 ==========

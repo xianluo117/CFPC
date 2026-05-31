@@ -231,6 +231,50 @@ header h1 {
   padding: 40px;
 }
 
+.pagination {
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+  color: #aaa;
+}
+
+.page-info {
+  min-width: 150px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.page-size-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.page-size-select {
+  background: #1a1a2e;
+  color: #ddd;
+  border: 1px solid #3a3a5e;
+  border-radius: 8px;
+  padding: 7px 10px;
+  outline: none;
+}
+
+.page-size-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.btn:disabled,
+.page-size-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .empty-state {
   text-align: center;
   color: #666;
@@ -555,5 +599,13 @@ header h1 {
   .gallery {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
+  }
+  .pagination {
+    gap: 8px;
+  }
+
+  .page-info {
+    order: -1;
+    width: 100%;
   }
 }
