@@ -149,11 +149,15 @@ function jsonResponse(data, status = 200) {
 }
 
 function getUploadLimitsNamespace(env) {
-  const namespace = env.UPLOAD_LIMITS;
-  if (!namespace || typeof namespace.get !== "function" || typeof namespace.put !== "function") {
-    return null;
-  }
-  return namespace;
+  const namespaces = [env.UPLOAD_LIMITS_KV, env.UPLOAD_LIMITS];
+  return (
+    namespaces.find(
+      (namespace) =>
+        namespace &&
+        typeof namespace.get === "function" &&
+        typeof namespace.put === "function",
+    ) || null
+  );
 }
 
 function getDayKey() {

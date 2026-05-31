@@ -7,6 +7,6 @@ binding = "IMAGES_BUCKET"
 bucket_name = "cfpc-images"
 
 [[kv_namespaces]]
-binding = "UPLOAD_LIMITS"
+binding = "UPLOAD_LIMITS_KV"
 id = "872dfd61f3ea4b258c7e807aa51fca58"
 
